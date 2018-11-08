@@ -9,13 +9,39 @@
       <br>
       <form action="/login" method="post">
         Email:<br>
-        <input type="text" name="email">
+        <input type="text" name="email" required>
         <br>
         Password:<br>
-        <input type="password" name="password">
+        <input type="password" name="password" required>
+        <br>
+        <input id="long" name="longitude" hidden>
+        <br>
+        <input id="lat" name="latitude" hidden>
         <br>
         <br><br>
         <input type="submit" value="Submit">
       </form>
+      <script type="text/javascript">
+      navigator.geolocation.getCurrentPosition(success, error, options);
+
+      var options = {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0
+    };
+
+    function success(pos) {
+      var crd = pos.coords;
+
+      console.log(`More or less ${crd.accuracy} meters.`);
+
+      document.getElementById('long').value = crd.longitude
+      document.getElementById('lat').value = crd.latitude
+    }
+
+    function error(err) {
+      console.warn(`ERROR(${err.code}): ${err.message}`);
+    }
+      </script>
   </body>
 </html>

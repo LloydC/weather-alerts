@@ -1,12 +1,13 @@
-const Sequelize = require('sequelize');
+const Sequelize = require('sequelize')
 const sequelize = new Sequelize('weatheralerts', 'lloydchambrier', null, {
   host: 'localhost',
   dialect: 'postgres',
   operatorsAliases: false,
-});
-const bodyParser = require('body-parser');
+})
+const fetch = require('node-fetch')
+const bodyParser = require('body-parser')
 const session = require('express-session')
-const SequelizeStore = require('connect-session-sequelize')(session.Store);
+const SequelizeStore = require('connect-session-sequelize')(session.Store)
 const bcrypt = require('bcrypt')
 const express = require('express')
 const app = express()
@@ -18,7 +19,7 @@ app.use(express.static('public'))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(session({
     store: new SequelizeStore({
-        db: sequelize,//values are passed from const sequelize
+        db: sequelize,
         checkExpirationInterval: 15 * 60 * 1000,
         expiration: 24 * 60 * 60 * 1000
     }),
@@ -56,10 +57,12 @@ const User = sequelize.define('users', {
 
 const Notification = sequelize.define('notifications', {
   phone: {
-    type: Sequelize.INTEGER
+    type: Sequelize.INTEGER,
+    allowNull: false
   },
   notificationTime: {
-    type: Sequelize.TEXT
+    type: Sequelize.TEXT,
+    allowNull: false
   },
   monday: {
     type: Sequelize.BOOLEAN
@@ -97,9 +100,31 @@ app.get('/signup', (req, res)=>{
 })
 
 app.get('/profile/:id', (req, res)=>{
-  User.findById(req.params.id).then((user)=>{
-    res.render('profile', {user: user})
+  User.findById(req.params.id)
+  .then((user)=>{
+    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${req.query.lat},${req.query.long}`)
+    .then(res => res.json())
+    .then(json =>{
+      const celsius = (json.currently.temperature-32)*5/9
+      console.log(`Summary: ${json.currently.summary}`)
+      console.log('//////////////////////')
+      console.log(`Current data ${JSON.stringify(json.currently)}`)
+      console.log('//////////////////////')
+      console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
+      console.log('//////////////////////')
+      console.log(`current time ${new Date(new Date().getTime())}`)
+      console.log('//////////////////////')
+      console.log(`Daily data ${JSON.stringify(json.daily)}`)
+      // console.log(new Date(json.daily.data[0].time).toString())
+      res.render('profile', {user: user, temperature: celsius})
+    });
+
   })
+  .catch(err => console.error(err))
+})
+
+app.get('/temperature', (req, res)=>{
+
 })
 
 app.get('/add-notification', (req, res)=>{
@@ -132,7 +157,7 @@ app.post('/signup', (req, res) =>{
 app.post('/login', (req, res) => {
     const email = req.body.email
     const password = req.body.password
-
+    console.log(req.body)
     // input validation
     if (password == null || password.length < 8 ||
         email == null || email.length == 0) {
@@ -153,7 +178,7 @@ app.post('/login', (req, res) => {
             .then((result) => {
                 if (result) {
                     req.session.user = user;
-                    res.redirect(`/profile/${user.id}`)
+                    res.redirect(`/profile/${user.id}?long=${req.body.longitude}&&lat=${req.body.latitude}`)
                 } else {
                     res.render('index', { loginFailed: true });
                 }
