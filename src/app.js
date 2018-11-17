@@ -96,13 +96,23 @@ app.get('/', (req, res)=>{
 })
 
 app.get('/signup', (req, res)=>{
-  res.render('signup')
+
+  User.findAll()
+  .then(users =>{
+    res.render('signup', {id: users.length+1})
+  })
+
+})
+
+app.get('/test', (req, res)=>{
+  console.log(`Longitude ${req.query.longitude} and latitude ${req.query.latitude}`)
+  res.send('test passed')
 })
 
 app.get('/profile/:id', (req, res)=>{
   User.findById(req.params.id)
   .then((user)=>{
-    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${req.query.lat},${req.query.long}`)
+    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${req.query.latitude},${req.query.longitude}`)
     .then(res => res.json())
     .then(json =>{
       const celsius = (json.currently.temperature-32)*5/9
@@ -115,7 +125,7 @@ app.get('/profile/:id', (req, res)=>{
       console.log(`current time ${new Date(new Date().getTime())}`)
       console.log('//////////////////////')
       console.log(`Daily data ${JSON.stringify(json.daily)}`)
-      // console.log(new Date(json.daily.data[0].time).toString())
+      console.log(new Date(json.daily.data[0].time).toString())
       res.render('profile', {user: user, temperature: celsius})
     });
 
@@ -136,8 +146,14 @@ app.get('/notifications', (req, res)=>{
 })
 
 app.post('/signup', (req, res) =>{
+
+  const longitude = parseInt(req.body.longitude)
+  const latitude = parseInt(req.body.latitude)
+  
   const inputpassword = req.body.password
   const saltRounds = 11
+  console.log(`req.body ${JSON.stringify(req.body)}`)
+  console.log(`password ${inputpassword}`)
 
     bcrypt.hash(inputpassword, saltRounds).then(hash => {
         User.create({
@@ -148,7 +164,7 @@ app.post('/signup', (req, res) =>{
           password: hash
         })
         .then(user =>{
-          res.redirect(`/profile/${user.id}`)
+          res.redirect(`/profile/${user.id}?longitude=${longitude}&&latitude=${latitude}`)
         })
         .catch(err => console.error(err))
       })
@@ -178,11 +194,14 @@ app.post('/login', (req, res) => {
             .then((result) => {
                 if (result) {
                     req.session.user = user;
-                    res.redirect(`/profile/${user.id}?long=${req.body.longitude}&&lat=${req.body.latitude}`)
+                    res.redirect(`/profile/${user.id}?longitude=${req.body.longitude}&&latitude=${req.body.latitude}`)
                 } else {
                     res.render('index', { loginFailed: true });
                 }
-            });
+            })
+            .catch((err) => {
+                console.log(err, err.stack)
+              })
         }
 
     }).catch((err) => {
