@@ -8,27 +8,10 @@
 
       <h1>Welcome to your profile <%= user.firstName %></h1>
       <br>
-      <p>Currently, the temperature in <%= user.city %>  is <%= Math.floor(temperature) %> C </p>
-
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-      <script type="text/javascript">
-      navigator.geolocation.getCurrentPosition(success, error, options);
-
-      var options = {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0
-    };
-
-    function success(pos) {
-      var crd = pos.coords;
-
-      console.log(`More or less ${crd.accuracy} meters.`);
-    }
-
-    function error(err) {
-      console.warn(`ERROR(${err.code}): ${err.message}`);
-    }
-      </script>
+      <p>Today's date is <%= date %>.</p>
+      <br>
+      <p>Currently, the temperature in <%= user.city %>  is <%= Math.floor(temperature) %> C.</p>
+      <br>
+      <p>Weather summary for today is <%= summary %>. You can expect <%= expect %></p>
   </body>
 </html>

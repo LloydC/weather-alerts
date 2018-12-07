@@ -6,5 +6,12 @@
   <body>
     <%- include('partials/navbar') -%>
       <h1>Notifications List </h1>
+      <br>
+      <p>List of notifications are </p>
+      <ul>
+  <% notifications.forEach(function(notification){ %>
+    <li><%- JSON.stringify(notification) %></li>
+  <% }); %>
+    </ul>
   </body>
 </html>

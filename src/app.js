@@ -96,12 +96,10 @@ app.get('/', (req, res)=>{
 })
 
 app.get('/signup', (req, res)=>{
-
   User.findAll()
   .then(users =>{
     res.render('signup', {id: users.length+1})
   })
-
 })
 
 app.get('/test', (req, res)=>{
@@ -112,10 +110,13 @@ app.get('/test', (req, res)=>{
 app.get('/profile/:id', (req, res)=>{
   User.findById(req.params.id)
   .then((user)=>{
-    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${req.query.latitude},${req.query.longitude}`)
+    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${req.session.latitude},${req.session.longitude}`)
     .then(res => res.json())
     .then(json =>{
       const celsius = (json.currently.temperature-32)*5/9
+      const summary = json.currently.summary
+      const daily_data_summary = json.daily.summary
+      const date = new Date(new Date().getTime())
       console.log(`Summary: ${json.currently.summary}`)
       console.log('//////////////////////')
       console.log(`Current data ${JSON.stringify(json.currently)}`)
@@ -126,30 +127,70 @@ app.get('/profile/:id', (req, res)=>{
       console.log('//////////////////////')
       console.log(`Daily data ${JSON.stringify(json.daily)}`)
       console.log(new Date(json.daily.data[0].time).toString())
-      res.render('profile', {user: user, temperature: celsius})
+      res.render('profile', {user: user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date})
     });
 
   })
   .catch(err => console.error(err))
 })
 
-app.get('/temperature', (req, res)=>{
-
-})
-
 app.get('/add-notification', (req, res)=>{
+  console.log(`req.session ${JSON.stringify(req.session)}`)
   res.render('add-notification')
 })
-
+app.post('/notifications', (req, res)=>{
+  console.log(`req.body ${JSON.stringify(req.body)}`)
+  if(req.body.everyday === 'true'){
+    Notification.create({
+      phone: req.body.phone,
+      notificationTime: req.body.time,
+      monday: true,
+      tuesday: true,
+      wednesday: true,
+      thursday: true,
+      friday: true,
+      saturday: true,
+      sunday: true,
+      userId: req.session.user.id
+    })
+    .then(()=>{
+      res.redirect(`/profile/${req.session.user.id}`)
+    })
+  }
+  // else if(req.body.monday === 'true') {
+  //
+  // }
+  // else if(req.body.tuesday === 'true'){
+  //
+  // }
+  // else if(req.body.wednesday === 'true'){
+  //
+  // }
+  // else if(req.body.thursday === 'true') {
+  //
+  // }
+  // else if(req.body.friday === 'true'){
+  //
+  // }
+  // else if(req.body.saturday === 'true'){
+  //
+  // }
+  // else if(req.body.sunday === 'true'){
+  //
+  // }
+})
 app.get('/notifications', (req, res)=>{
-  res.render('notifications')
+  Notification.findAll()
+  .then(notifications=>{
+    res.render('notifications', {notifications: notifications})
+  })
 })
 
 app.post('/signup', (req, res) =>{
 
   const longitude = parseInt(req.body.longitude)
   const latitude = parseInt(req.body.latitude)
-  
+
   const inputpassword = req.body.password
   const saltRounds = 11
   console.log(`req.body ${JSON.stringify(req.body)}`)
@@ -164,7 +205,12 @@ app.post('/signup', (req, res) =>{
           password: hash
         })
         .then(user =>{
-          res.redirect(`/profile/${user.id}?longitude=${longitude}&&latitude=${latitude}`)
+          req.session.user = user;
+          req.session.longitude = longitude;
+          req.session.latitude = latitude;
+          res.redirect(`/profile/${user.id}`)
+          // An alternative way to keep track of longitude and latitude
+          // could be using req.session
         })
         .catch(err => console.error(err))
       })
@@ -180,7 +226,6 @@ app.post('/login', (req, res) => {
         res.render('index', { loginFailed: true })
         return;
     }
-
     //user authentication
     User.findOne({
         where: {
@@ -194,7 +239,7 @@ app.post('/login', (req, res) => {
             .then((result) => {
                 if (result) {
                     req.session.user = user;
-                    res.redirect(`/profile/${user.id}?longitude=${req.body.longitude}&&latitude=${req.body.latitude}`)
+                    res.redirect(`/profile/${user.id}`)
                 } else {
                     res.render('index', { loginFailed: true });
                 }
