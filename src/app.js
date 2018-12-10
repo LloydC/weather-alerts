@@ -92,97 +92,13 @@ Notification.belongsTo(User);
 
 // ROUTES
 app.get('/', (req, res)=>{
-  res.render('index')
+  res.render('index', {id: 0})
 })
 
 app.get('/signup', (req, res)=>{
   User.findAll()
   .then(users =>{
     res.render('signup', {id: users.length+1})
-  })
-})
-
-app.get('/test', (req, res)=>{
-  console.log(`Longitude ${req.query.longitude} and latitude ${req.query.latitude}`)
-  res.send('test passed')
-})
-
-app.get('/profile/:id', (req, res)=>{
-  User.findById(req.params.id)
-  .then((user)=>{
-    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${req.session.latitude},${req.session.longitude}`)
-    .then(res => res.json())
-    .then(json =>{
-      const celsius = (json.currently.temperature-32)*5/9
-      const summary = json.currently.summary
-      const daily_data_summary = json.daily.summary
-      const date = new Date(new Date().getTime())
-      console.log(`Summary: ${json.currently.summary}`)
-      console.log('//////////////////////')
-      console.log(`Current data ${JSON.stringify(json.currently)}`)
-      console.log('//////////////////////')
-      console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
-      console.log('//////////////////////')
-      console.log(`current time ${new Date(new Date().getTime())}`)
-      console.log('//////////////////////')
-      console.log(`Daily data ${JSON.stringify(json.daily)}`)
-      console.log(new Date(json.daily.data[0].time).toString())
-      res.render('profile', {user: user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date})
-    });
-
-  })
-  .catch(err => console.error(err))
-})
-
-app.get('/add-notification', (req, res)=>{
-  console.log(`req.session ${JSON.stringify(req.session)}`)
-  res.render('add-notification')
-})
-app.post('/notifications', (req, res)=>{
-  console.log(`req.body ${JSON.stringify(req.body)}`)
-  if(req.body.everyday === 'true'){
-    Notification.create({
-      phone: req.body.phone,
-      notificationTime: req.body.time,
-      monday: true,
-      tuesday: true,
-      wednesday: true,
-      thursday: true,
-      friday: true,
-      saturday: true,
-      sunday: true,
-      userId: req.session.user.id
-    })
-    .then(()=>{
-      res.redirect(`/profile/${req.session.user.id}`)
-    })
-  }
-  // else if(req.body.monday === 'true') {
-  //
-  // }
-  // else if(req.body.tuesday === 'true'){
-  //
-  // }
-  // else if(req.body.wednesday === 'true'){
-  //
-  // }
-  // else if(req.body.thursday === 'true') {
-  //
-  // }
-  // else if(req.body.friday === 'true'){
-  //
-  // }
-  // else if(req.body.saturday === 'true'){
-  //
-  // }
-  // else if(req.body.sunday === 'true'){
-  //
-  // }
-})
-app.get('/notifications', (req, res)=>{
-  Notification.findAll()
-  .then(notifications=>{
-    res.render('notifications', {notifications: notifications})
   })
 })
 
@@ -211,6 +127,8 @@ app.post('/signup', (req, res) =>{
           res.redirect(`/profile/${user.id}`)
           // An alternative way to keep track of longitude and latitude
           // could be using req.session
+
+          // Add a redirect for when username already exists in db
         })
         .catch(err => console.error(err))
       })
@@ -263,6 +181,90 @@ app.get('/logout', (req, res) => {
         res.redirect('/');
     })
 })
+
+
+app.get('/profile/:id', (req, res)=>{
+  User.findById(req.params.id)
+  .then((user)=>{
+    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${req.session.latitude},${req.session.longitude}`)
+    .then(res => res.json())
+    .then(json =>{
+      // create if (json.code === 400) statement for error checking
+      console.log('JSON '+ JSON.stringify(json))
+      const celsius = (json.currently.temperature-32)*5/9
+      const summary = json.currently.summary
+      const daily_data_summary = json.daily.summary
+      const date = new Date(new Date().getTime())
+      console.log(`Summary: ${json.currently.summary}`)
+      console.log('//////////////////////')
+      console.log(`Current data ${JSON.stringify(json.currently)}`)
+      console.log('//////////////////////')
+      console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
+      console.log('//////////////////////')
+      console.log(`current time ${new Date(new Date().getTime())}`)
+      console.log('//////////////////////')
+      console.log(`Daily data ${JSON.stringify(json.daily)}`)
+      console.log(new Date(json.daily.data[0].time).toString())
+      res.render('profile', {user: user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
+    });
+
+  })
+  .catch(err => console.error(err))
+})
+
+app.get('/add-notification', (req, res)=>{
+  console.log(`req.session ${JSON.stringify(req.session)}`)
+  res.render('add-notification', {id: req.session.user.id})
+})
+app.post('/notifications', (req, res)=>{
+  console.log(`req.body ${JSON.stringify(req.body)}`)
+    Notification.create({
+      phone: req.body.phone,
+      notificationTime: req.body.time,
+      monday: req.body.monday,
+      tuesday: req.body.tuesday,
+      wednesday: req.body.wednesday,
+      thursday: req.body.thursday,
+      friday: req.body.friday,
+      saturday: req.body.saturday,
+      sunday: req.body.sunday,
+      userId: req.session.user.id
+    })
+    .then(()=>{
+      res.redirect(`/profile/${req.session.user.id}`)
+    })
+  // if(req.body.everyday === 'true'){
+
+  // }
+  // else if(req.body.monday === 'true') {
+  //
+  // }
+  // else if(req.body.tuesday === 'true'){
+  //
+  // }
+  // else if(req.body.wednesday === 'true'){
+  //
+  // }
+  // else if(req.body.thursday === 'true') {
+  //
+  // }
+  // else if(req.body.friday === 'true'){
+  //
+  // }
+  // else if(req.body.saturday === 'true'){
+  //
+  // }
+  // else if(req.body.sunday === 'true'){
+  //
+  // }
+})
+app.get('/notifications', (req, res)=>{
+  Notification.findAll()
+  .then(notifications=>{
+    res.render('notifications', {notifications: notifications, id: req.session.user.id})
+  })
+})
+
 sequelize.sync()
 .then(()=>{
   app.listen(port, ()=>{
