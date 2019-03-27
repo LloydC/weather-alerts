@@ -16,5 +16,12 @@ cron.schedule('* * * * * *', () => {
   });
 
   cron.schedule('* * * * *', () => {
-    console.log(`running a task every minute, current time is ${datetime}`);
+    console.log(`running a task every minute, current time is ${datetime}`)
+    // query the database for any notification time that matches current time
+    // if match(es) found
+    //    send a notification text to every match(es)
+
+    // ! Make sure that the format used for stored "notification time"
+    // is the same format used for "current time"
+    // ! 
   });

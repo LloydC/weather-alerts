@@ -36,39 +36,35 @@
       </form>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
       <script type="text/javascript">
-      navigator.geolocation.getCurrentPosition(success, error, options);
+        navigator.geolocation.getCurrentPosition(success, error, options)
 
-      var options = {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0
-    };
+        var options = {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        };
 
-    function success(pos) {
-      var crd = pos.coords;
-      long = pos.coords.longitude;
-      lat = pos.coords.latitude;
-      console.log(`Coordinate ${pos.coords}`)
-      console.log(`More or less ${crd.accuracy} meters.`);
-      console.log(`Longitude ${long}`)
-      $('#long').val(long)
-      $('#lat').val(lat)
-    }
+        function success(pos) {
+          var crd = pos.coords;
+          long = pos.coords.longitude;
+          lat = pos.coords.latitude;
+          console.log(`Coordinate ${pos.coords}`)
+          console.log(`More or less ${crd.accuracy} meters.`);
+          console.log(`Longitude ${long}`)
+          $('#long').val(long)
+          $('#lat').val(lat)
+        }
 
-    function error(err) {
-      console.warn(`ERROR(${err.code}): ${err.message}`);
-    }
-      $( "#signup" ).submit(function( event ) {
-        let long;
-        let lat;
-        // Stop form from submitting normally
-        // event.preventDefault();
-        const town = $('#city').val();
-        const pk = $('#pk').val()
-
-
-
-    })
+        function error(err) {
+          console.warn(`ERROR(${err.code}): ${err.message}`);
+        }
+          $( "#signup" ).submit(function( event ) {
+            let long;
+            let lat;
+        
+            const town = $('#city').val();
+            const pk = $('#pk').val()
+        })
       </script>
   </body>
 </html>

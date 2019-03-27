@@ -92,7 +92,7 @@ Notification.belongsTo(User);
 
 // ROUTES
 app.get('/', (req, res)=>{
-  res.render('index', {id: 0})
+  res.render('index')
 })
 
 app.get('/signup', (req, res)=>{
@@ -125,7 +125,7 @@ app.post('/signup', (req, res) =>{
           req.session.user = user;
           req.session.longitude = longitude;
           req.session.latitude = latitude;
-          res.redirect(`/profile/${user.id}`)
+          res.redirect(`/profile`)
           // An alternative way to keep track of longitude and latitude
           // could be using req.session
 
@@ -158,7 +158,7 @@ app.post('/login', (req, res) => {
             .then((result) => {
                 if (result) {
                     req.session.user = user;
-                    res.redirect(`/profile/${user.id}`)
+                    res.redirect(`/profile`)
                 } else {
                     res.render('index', { loginFailed: true });
                 }
@@ -184,8 +184,8 @@ app.get('/logout', (req, res) => {
 })
 
 
-app.get('/profile/:id', (req, res)=>{
-  User.findById(req.params.id)
+app.get('/profile', (req, res)=>{
+  User.findById(req.session.user.id)
   .then((user)=>{
     fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${req.session.latitude},${req.session.longitude}`)
     .then(res => res.json())
@@ -232,14 +232,14 @@ app.post('/notifications', (req, res)=>{
       userId: req.session.user.id
     })
     .then(()=>{
-      res.redirect(`/profile/${req.session.user.id}`)
+      res.redirect(`/profile`)
     })
     .catch(err => console.error(err))
 })
 app.get('/notifications', (req, res)=>{
   Notification.findAll()
   .then(notifications=>{
-    res.render('notifications', {notifications: notifications, id: req.session.user.id})
+    res.render('notifications', {notifications: notifications})
   })
   .catch(err => console.error(err))
 })

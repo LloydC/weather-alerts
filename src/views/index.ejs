@@ -24,19 +24,21 @@
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
       <script type="text/javascript">
       $( "#login" ).submit(function( event ) {
-        let long;
-        let lat;
         // Stop form from submitting normally
         // event.preventDefault();
+        let long;
+        let lat;
+  
         const town = $('#city').val();
         const pk = $('#pk').val()
-          navigator.geolocation.getCurrentPosition(success, error, options);
+        
+        navigator.geolocation.getCurrentPosition(success, error, options)
 
         var options = {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-      };
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        };
 
       function success(pos) {
         var crd = pos.coords;
