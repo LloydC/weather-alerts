@@ -233,30 +233,6 @@ app.post('/notifications', (req, res)=>{
     .then(()=>{
       res.redirect(`/profile/${req.session.user.id}`)
     })
-  // if(req.body.everyday === 'true'){
-
-  // }
-  // else if(req.body.monday === 'true') {
-  //
-  // }
-  // else if(req.body.tuesday === 'true'){
-  //
-  // }
-  // else if(req.body.wednesday === 'true'){
-  //
-  // }
-  // else if(req.body.thursday === 'true') {
-  //
-  // }
-  // else if(req.body.friday === 'true'){
-  //
-  // }
-  // else if(req.body.saturday === 'true'){
-  //
-  // }
-  // else if(req.body.sunday === 'true'){
-  //
-  // }
 })
 app.get('/notifications', (req, res)=>{
   Notification.findAll()
