@@ -100,6 +100,7 @@ app.get('/signup', (req, res)=>{
   .then(users =>{
     res.render('signup', {id: users.length+1})
   })
+  .catch(err => console.error(err))
 })
 
 app.post('/signup', (req, res) =>{
@@ -233,12 +234,14 @@ app.post('/notifications', (req, res)=>{
     .then(()=>{
       res.redirect(`/profile/${req.session.user.id}`)
     })
+    .catch(err => console.error(err))
 })
 app.get('/notifications', (req, res)=>{
   Notification.findAll()
   .then(notifications=>{
     res.render('notifications', {notifications: notifications, id: req.session.user.id})
   })
+  .catch(err => console.error(err))
 })
 
 sequelize.sync()
