@@ -1,3 +1,4 @@
+const cities = require('cities.json');
 const Sequelize = require('sequelize')
 const sequelize = new Sequelize('weatheralerts', 'lloydchambrier', null, {
   host: 'localhost',
@@ -63,27 +64,6 @@ const Notification = sequelize.define('notifications', {
   notificationTime: {
     type: Sequelize.TEXT,
     allowNull: false
-  },
-  monday: {
-    type: Sequelize.BOOLEAN
-  },
-  tuesday: {
-    type: Sequelize.BOOLEAN
-  },
-  wednesday: {
-    type: Sequelize.BOOLEAN
-  },
-  thursday: {
-    type: Sequelize.BOOLEAN
-  },
-  friday: {
-    type: Sequelize.BOOLEAN
-  },
-  saturday: {
-    type: Sequelize.BOOLEAN
-  },
-  sunday: {
-    type: Sequelize.BOOLEAN
   }
 })
 // TABLE RELATIONSHIPS
@@ -96,17 +76,14 @@ app.get('/', (req, res)=>{
 })
 
 app.get('/signup', (req, res)=>{
-  User.findAll()
-  .then(users =>{
-    res.render('signup', {id: users.length+1})
-  })
-  .catch(err => console.error(err))
+    res.render('signup')
 })
 
 app.post('/signup', (req, res) =>{
-
-  const longitude = parseInt(req.body.longitude)
-  const latitude = parseInt(req.body.latitude)
+  const cityName = req.body.city;
+  const cityLocation = cities.find( city => city.name == cityName)
+  //Look up in cities.json
+  console.log(`Cities ${JSON.stringify(cities.find( city => city.name == cityName))}`);
 
   const inputpassword = req.body.password
   const saltRounds = 11
@@ -122,14 +99,28 @@ app.post('/signup', (req, res) =>{
           password: hash
         })
         .then(user =>{
-          req.session.user = user;
-          req.session.longitude = longitude;
-          req.session.latitude = latitude;
-          res.redirect(`/profile`)
-          // An alternative way to keep track of longitude and latitude
-          // could be using req.session
-
-          // Add a redirect for when username already exists in db
+          fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${cityLocation.lat},${cityLocation.lng}`)
+              .then(res => res.json())
+              .then(json =>{
+                // create if (json.code === 400) statement for error checking
+                req.session.user = user;
+                console.log('JSON '+ JSON.stringify(json))
+                const celsius = (json.currently.temperature-32)*5/9
+                const summary = json.currently.summary
+                const daily_data_summary = json.daily.summary
+                const date = new Date(new Date().getTime())
+                console.log(`Summary: ${json.currently.summary}`)
+                console.log('//////////////////////')
+                console.log(`Current data ${JSON.stringify(json.currently)}`)
+                console.log('//////////////////////')
+                console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
+                console.log('//////////////////////')
+                console.log(`current time ${new Date(new Date().getTime())}`)
+                console.log('//////////////////////')
+                console.log(`Daily data ${JSON.stringify(json.daily)}`)
+                console.log(new Date(json.daily.data[0].time).toString())
+                res.render('profile', {user: user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
+              })
         })
         .catch(err => console.error(err))
       })
@@ -138,6 +129,9 @@ app.post('/signup', (req, res) =>{
 app.post('/login', (req, res) => {
     const email = req.body.email
     const password = req.body.password
+    const longitude = req.body.longitude
+    const latitude = req.body.latitude
+
     console.log(req.body)
     // input validation
     if (password == null || password.length < 8 ||
@@ -158,6 +152,8 @@ app.post('/login', (req, res) => {
             .then((result) => {
                 if (result) {
                     req.session.user = user;
+                    req.session.longitude = longitude;
+                    req.session.latitude = latitude;
                     res.redirect(`/profile`)
                 } else {
                     res.render('index', { loginFailed: true });
@@ -185,37 +181,60 @@ app.get('/logout', (req, res) => {
 
 
 app.get('/profile', (req, res)=>{
-  User.findById(req.session.user.id)
-  .then((user)=>{
-    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${req.session.latitude},${req.session.longitude}`)
-    .then(res => res.json())
-    .then(json =>{
-      // create if (json.code === 400) statement for error checking
-      console.log('JSON '+ JSON.stringify(json))
-      const celsius = (json.currently.temperature-32)*5/9
-      const summary = json.currently.summary
-      const daily_data_summary = json.daily.summary
-      const date = new Date(new Date().getTime())
-      console.log(`Summary: ${json.currently.summary}`)
-      console.log('//////////////////////')
-      console.log(`Current data ${JSON.stringify(json.currently)}`)
-      console.log('//////////////////////')
-      console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
-      console.log('//////////////////////')
-      console.log(`current time ${new Date(new Date().getTime())}`)
-      console.log('//////////////////////')
-      console.log(`Daily data ${JSON.stringify(json.daily)}`)
-      console.log(new Date(json.daily.data[0].time).toString())
-      res.render('profile', {user: user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
-    });
-
+  User.findOne({
+      where: {
+          email: req.body.email
+      }
+    })
+    .then((user) => {
+    if (user == null) {
+        res.render('index', { loginFailed: true })
+    } else {
+    bcrypt.compare(req.body.password, user.password)
+        .then((result) => {
+            if (result) {
+                // res.redirect(`/profile`)
+              fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${req.body.latitude},${req.body.longitude}`)
+              .then(res => res.json())
+              .then(json =>{
+                // create if (json.code === 400) statement for error checking
+                req.session.user = user;
+                req.session.longitude = req.body.longitude;
+                req.session.latitude = req.body.latitude;
+                console.log('JSON '+ JSON.stringify(json))
+                const celsius = (json.currently.temperature-32)*5/9
+                const summary = json.currently.summary
+                const daily_data_summary = json.daily.summary
+                const date = new Date(new Date().getTime())
+                console.log(`Summary: ${json.currently.summary}`)
+                console.log('//////////////////////')
+                console.log(`Current data ${JSON.stringify(json.currently)}`)
+                console.log('//////////////////////')
+                console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
+                console.log('//////////////////////')
+                console.log(`current time ${new Date(new Date().getTime())}`)
+                console.log('//////////////////////')
+                console.log(`Daily data ${JSON.stringify(json.daily)}`)
+                console.log(new Date(json.daily.data[0].time).toString())
+                res.render('profile', {user: user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
+              })
+            } else {
+                res.render('index', { loginFailed: true });
+            }
+        })
+        .catch((err) => {
+            console.log(err, err.stack)
+          })
+    }
+  }).catch((err) => {
+      console.log(err, err.stack)
+      res.render('home', { loginFailed: true })
   })
-  .catch(err => console.error(err))
 })
 
 app.get('/add-notification', (req, res)=>{
   console.log(`req.session ${JSON.stringify(req.session)}`)
-  res.render('add-notification', {id: req.session.user.id})
+  res.render('add-notification')
 })
 app.post('/notifications', (req, res)=>{
   console.log(`req.body ${JSON.stringify(req.body)}`)

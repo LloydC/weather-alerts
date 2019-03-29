@@ -23,14 +23,10 @@
       </form>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
       <script type="text/javascript">
-      $( "#login" ).submit(function( event ) {
         // Stop form from submitting normally
         // event.preventDefault();
         let long;
         let lat;
-  
-        const town = $('#city').val();
-        const pk = $('#pk').val()
         
         navigator.geolocation.getCurrentPosition(success, error, options)
 
@@ -51,7 +47,7 @@
       function error(err) {
         console.warn(`ERROR(${err.code}): ${err.message}`);
       }
-    })
+   
       </script>
   </body>
 </html>
