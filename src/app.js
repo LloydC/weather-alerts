@@ -98,27 +98,17 @@ app.post('/signup', (req, res) =>{
           password: hash
         })
         .then(user =>{
-          fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${cityLocation.lat},${cityLocation.lng}`)
+          fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${cityLocation.lat},${cityLocation.lng}?units=si`)
               .then(res => res.json())
               .then(json =>{
                 // create if (json.code === 400) statement for error checking
                 req.session.user = user;
-                console.log('JSON '+ JSON.stringify(json))
-                const celsius = (json.currently.temperature-32)*5/9
+                // console.log('JSON '+ JSON.stringify(json))
+                const temperature = json.currently.temperature
                 const summary = json.currently.summary
                 const daily_data_summary = json.daily.summary
                 const date = new Date(new Date().getTime())
-                console.log(`Summary: ${json.currently.summary}`)
-                console.log('//////////////////////')
-                console.log(`Current data ${JSON.stringify(json.currently)}`)
-                console.log('//////////////////////')
-                console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
-                console.log('//////////////////////')
-                console.log(`current time ${new Date(new Date().getTime())}`)
-                console.log('//////////////////////')
-                console.log(`Daily data ${JSON.stringify(json.daily)}`)
-                console.log(new Date(json.daily.data[0].time).toString())
-                res.render('profile', {user: user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
+                res.render('profile', {user: user, temperature: temperature, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
               })
         })
         .catch(err => console.error(err))
@@ -150,27 +140,17 @@ app.post('/login', (req, res) => {
                 if (result) {
                     const cityLocation = cities.find( city => city.name == user.city)
                     req.session.user = user;
-                    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${cityLocation.lat},${cityLocation.lng}`)
+                    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${cityLocation.lat},${cityLocation.lng}?units=si`)
                     .then(res => res.json())
                     .then(json =>{
                       // create if (json.code === 400) statement for error checking
                       req.session.user = user;
-                      console.log('JSON '+ JSON.stringify(json))
-                      const celsius = (json.currently.temperature-32)*5/9
+                      // console.log(`JSON ${JSON.stringify(json.currently)}`)
+                      const temperature = json.currently.temperature
                       const summary = json.currently.summary
                       const daily_data_summary = json.daily.summary
                       const date = new Date(new Date().getTime())
-                      console.log(`Summary: ${json.currently.summary}`)
-                      console.log('//////////////////////')
-                      console.log(`Current data ${JSON.stringify(json.currently)}`)
-                      console.log('//////////////////////')
-                      console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
-                      console.log('//////////////////////')
-                      console.log(`current time ${new Date(new Date().getTime())}`)
-                      console.log('//////////////////////')
-                      console.log(`Daily data ${JSON.stringify(json.daily)}`)
-                      console.log(new Date(json.daily.data[0].time).toString())
-                      res.render('profile', {user: user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
+                      res.render('profile', {user: user, temperature: temperature, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
                     }).catch( err => console.error(err))
                 } else {
                     res.render('index', { loginFailed: true });
@@ -196,30 +176,17 @@ app.get('/logout', (req, res) => {
     })
 })
 
-
 app.get('/profile', (req, res)=>{
   if(req.session.user){
     const cityLocation = cities.find( city => city.name == req.session.user.city)
-    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${cityLocation.lat},${cityLocation.lng}`)
+    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${cityLocation.lat},${cityLocation.lng}?units=si`)
       .then(res => res.json())
       .then(json =>{
-      // create if (json.code === 400) statement for error checking
-        console.log('JSON '+ JSON.stringify(json))
-        const celsius = (json.currently.temperature-32)*5/9
+        const temperature = json.currently.temperature
         const summary = json.currently.summary
         const daily_data_summary = json.daily.summary
         const date = new Date(new Date().getTime())
-        console.log(`Summary: ${json.currently.summary}`)
-        console.log('//////////////////////')
-        console.log(`Current data ${JSON.stringify(json.currently)}`)
-        console.log('//////////////////////')
-        console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
-        console.log('//////////////////////')
-        console.log(`current time ${new Date(new Date().getTime())}`)
-        console.log('//////////////////////')
-        console.log(`Daily data ${JSON.stringify(json.daily)}`)
-        console.log(new Date(json.daily.data[0].time).toString())
-        res.render('profile', {user: req.session.user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
+        res.render('profile', {user: req.session.user, temperature: temperature, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
      })
    }
    else{
