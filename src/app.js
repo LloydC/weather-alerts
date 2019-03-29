@@ -82,9 +82,8 @@ app.get('/signup', (req, res)=>{
 app.post('/signup', (req, res) =>{
   const cityName = req.body.city;
   const cityLocation = cities.find( city => city.name == cityName)
-  //Look up in cities.json
-  console.log(`Cities ${JSON.stringify(cities.find( city => city.name == cityName))}`);
-
+  //console.log(`City match found ${JSON.stringify(cities.find( city => city.name == cityName))}`);
+  
   const inputpassword = req.body.password
   const saltRounds = 11
   console.log(`req.body ${JSON.stringify(req.body)}`)
@@ -129,8 +128,6 @@ app.post('/signup', (req, res) =>{
 app.post('/login', (req, res) => {
     const email = req.body.email
     const password = req.body.password
-    const longitude = req.body.longitude
-    const latitude = req.body.latitude
 
     console.log(req.body)
     // input validation
@@ -151,10 +148,30 @@ app.post('/login', (req, res) => {
         bcrypt.compare(password, user.password)
             .then((result) => {
                 if (result) {
+                    const cityLocation = cities.find( city => city.name == user.city)
                     req.session.user = user;
-                    req.session.longitude = longitude;
-                    req.session.latitude = latitude;
-                    res.redirect(`/profile`)
+                    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${cityLocation.lat},${cityLocation.lng}`)
+                    .then(res => res.json())
+                    .then(json =>{
+                      // create if (json.code === 400) statement for error checking
+                      req.session.user = user;
+                      console.log('JSON '+ JSON.stringify(json))
+                      const celsius = (json.currently.temperature-32)*5/9
+                      const summary = json.currently.summary
+                      const daily_data_summary = json.daily.summary
+                      const date = new Date(new Date().getTime())
+                      console.log(`Summary: ${json.currently.summary}`)
+                      console.log('//////////////////////')
+                      console.log(`Current data ${JSON.stringify(json.currently)}`)
+                      console.log('//////////////////////')
+                      console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
+                      console.log('//////////////////////')
+                      console.log(`current time ${new Date(new Date().getTime())}`)
+                      console.log('//////////////////////')
+                      console.log(`Daily data ${JSON.stringify(json.daily)}`)
+                      console.log(new Date(json.daily.data[0].time).toString())
+                      res.render('profile', {user: user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
+                    }).catch( err => console.error(err))
                 } else {
                     res.render('index', { loginFailed: true });
                 }
@@ -166,7 +183,7 @@ app.post('/login', (req, res) => {
 
     }).catch((err) => {
         console.log(err, err.stack)
-        res.render('home', { loginFailed: true })
+        res.render('index', { loginFailed: true })
     })
 })
 
@@ -181,55 +198,33 @@ app.get('/logout', (req, res) => {
 
 
 app.get('/profile', (req, res)=>{
-  User.findOne({
-      where: {
-          email: req.body.email
-      }
-    })
-    .then((user) => {
-    if (user == null) {
-        res.render('index', { loginFailed: true })
-    } else {
-    bcrypt.compare(req.body.password, user.password)
-        .then((result) => {
-            if (result) {
-                // res.redirect(`/profile`)
-              fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${req.body.latitude},${req.body.longitude}`)
-              .then(res => res.json())
-              .then(json =>{
-                // create if (json.code === 400) statement for error checking
-                req.session.user = user;
-                req.session.longitude = req.body.longitude;
-                req.session.latitude = req.body.latitude;
-                console.log('JSON '+ JSON.stringify(json))
-                const celsius = (json.currently.temperature-32)*5/9
-                const summary = json.currently.summary
-                const daily_data_summary = json.daily.summary
-                const date = new Date(new Date().getTime())
-                console.log(`Summary: ${json.currently.summary}`)
-                console.log('//////////////////////')
-                console.log(`Current data ${JSON.stringify(json.currently)}`)
-                console.log('//////////////////////')
-                console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
-                console.log('//////////////////////')
-                console.log(`current time ${new Date(new Date().getTime())}`)
-                console.log('//////////////////////')
-                console.log(`Daily data ${JSON.stringify(json.daily)}`)
-                console.log(new Date(json.daily.data[0].time).toString())
-                res.render('profile', {user: user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
-              })
-            } else {
-                res.render('index', { loginFailed: true });
-            }
-        })
-        .catch((err) => {
-            console.log(err, err.stack)
-          })
-    }
-  }).catch((err) => {
-      console.log(err, err.stack)
-      res.render('home', { loginFailed: true })
-  })
+  if(req.session.user){
+    const cityLocation = cities.find( city => city.name == req.session.user.city)
+    fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${cityLocation.lat},${cityLocation.lng}`)
+      .then(res => res.json())
+      .then(json =>{
+      // create if (json.code === 400) statement for error checking
+        console.log('JSON '+ JSON.stringify(json))
+        const celsius = (json.currently.temperature-32)*5/9
+        const summary = json.currently.summary
+        const daily_data_summary = json.daily.summary
+        const date = new Date(new Date().getTime())
+        console.log(`Summary: ${json.currently.summary}`)
+        console.log('//////////////////////')
+        console.log(`Current data ${JSON.stringify(json.currently)}`)
+        console.log('//////////////////////')
+        console.log(`Hourly data ${JSON.stringify(json.hourly)}`)
+        console.log('//////////////////////')
+        console.log(`current time ${new Date(new Date().getTime())}`)
+        console.log('//////////////////////')
+        console.log(`Daily data ${JSON.stringify(json.daily)}`)
+        console.log(new Date(json.daily.data[0].time).toString())
+        res.render('profile', {user: req.session.user, temperature: celsius, summary: summary, expect: daily_data_summary, date: date, id: req.session.user.id})
+     })
+   }
+   else{
+    res.render('index', { loginFailed: true });
+   }
 })
 
 app.get('/add-notification', (req, res)=>{
