@@ -1,4 +1,6 @@
+const messagebird = require('messagebird')('J7rKDcJgSDMOH2RpluPfsMq0A');
 const cities = require('cities.json');
+const cron = require('node-cron');
 const Sequelize = require('sequelize')
 const sequelize = new Sequelize('weatheralerts', 'lloydchambrier', null, {
   host: 'localhost',
@@ -13,6 +15,16 @@ const bcrypt = require('bcrypt')
 const express = require('express')
 const app = express()
 const port = 5000 ||process.env.PORT
+
+// For todays date;
+Date.prototype.today = function () { 
+  return ((this.getDate() < 10)?"0":"") + this.getDate() +"/"+(((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) +"/"+ this.getFullYear();
+}
+// For the time now
+Date.prototype.timeNow = function(){ 
+  // return ((this.getHours() < 10)?"0":"") + ((this.getHours()>12)?"0"+(this.getHours()-12):this.getHours()) +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes(); 
+  return (this.getHours()+ ':'+ this.getMinutes());
+};
 
 // EXPRESS CONFIG SETTINGS
 app.set('view engine', 'ejs')
@@ -64,14 +76,56 @@ const Notification = sequelize.define('notifications', {
   notificationTime: {
     type: Sequelize.TEXT,
     allowNull: false
+  },
+  city: {
+    type: Sequelize.STRING,
+    allowNull: false
   }
 })
 // TABLE RELATIONSHIPS
 User.hasMany(Notification);
 Notification.belongsTo(User);
 
+let not = Notification.findAll()
 // ROUTES
 app.get('/', (req, res)=>{
+
+  cron.schedule('* * * * *', () => {
+    let datetime = new Date().timeNow();
+    not.then(notifications => 
+      notifications.forEach(notification => {
+        console.log(`Datetime ${datetime}`)
+        if(notification.dataValues.notificationTime == datetime ){
+          //    send a notification text to every match(es)
+          messagebird.messages.create({
+            originator : '+31685765664',
+            recipients : [ '+31685765664' ],
+            body : 'Hello World, I am a text message and I was hatched by Javascript code!'
+          },
+          function (err, response) {
+                if (err) {
+                  console.log("ERROR:");
+                  console.log(err);
+              } else {
+                  console.log("SUCCESS:");
+                  console.log(response);
+              }
+          })
+          console.log(`Match found for ${datetime}`)
+        }
+        else{
+          console.log(`Notification ${notification.dataValues.id} time is ${notification.dataValues.notificationTime}`)
+        }
+      }))
+  
+  // query the database for any notification time that matches current time
+  // if match(es) found
+  //    send a notification text to every match(es)
+
+  // ! Make sure that the format used for stored "notification time"
+  // is the same format used for "current time"
+  // ! 
+});
   res.render('index')
 })
 
@@ -203,13 +257,7 @@ app.post('/notifications', (req, res)=>{
     Notification.create({
       phone: req.body.phone,
       notificationTime: req.body.time,
-      monday: req.body.monday,
-      tuesday: req.body.tuesday,
-      wednesday: req.body.wednesday,
-      thursday: req.body.thursday,
-      friday: req.body.friday,
-      saturday: req.body.saturday,
-      sunday: req.body.sunday,
+      city: req.body.city,
       userId: req.session.user.id
     })
     .then(()=>{
@@ -228,6 +276,8 @@ app.get('/notifications', (req, res)=>{
 sequelize.sync()
 .then(()=>{
   app.listen(port, ()=>{
+    let datetime = new Date().timeNow();
     console.log(`App is listening on port ${port}`)
+    console.log(`running a task every minute, current time is ${datetime}`)
   })
 })

@@ -17,6 +17,7 @@
     "ejs": "^2.6.1",
     "express": "^4.16.4",
     "express-session": "^1.15.6",
+    "messagebird": "^2.4.1",
     "node-cron": "^2.0.3",
     "node-fetch": "^2.2.1",
     "pg": "^7.6.0",
