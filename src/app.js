@@ -1,4 +1,4 @@
-const messagebird = require('messagebird')('J7rKDcJgSDMOH2RpluPfsMq0A');
+const messagebird = require('messagebird')(`${process.env.MSG_BIRD_KEY}`);
 const cities = require('cities.json');
 const cron = require('node-cron');
 const Sequelize = require('sequelize')
@@ -23,7 +23,7 @@ Date.prototype.today = function () {
 // For the time now
 Date.prototype.timeNow = function(){ 
   // return ((this.getHours() < 10)?"0":"") + ((this.getHours()>12)?"0"+(this.getHours()-12):this.getHours()) +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes(); 
-  return (this.getHours()+ ':'+ this.getMinutes());
+  return (this.getHours()+":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes());
 };
 
 // EXPRESS CONFIG SETTINGS
@@ -86,46 +86,52 @@ const Notification = sequelize.define('notifications', {
 User.hasMany(Notification);
 Notification.belongsTo(User);
 
-let not = Notification.findAll()
+// DETECT TIME & FIND MATCHING NOTIFICATIONS
+cron.schedule('* * * * *', () => {
+let datetime = new Date().timeNow();
+console.log('cron is at work :)')
+console.log(datetime)
+Notification.findAll({where: {notificationTime: datetime}})
+  .then(notifications =>{
+    console.log(JSON.stringify(notifications))
+    if(notifications.length >= 1){
+      // console.log(`Match(es) found ${JSON.stringify(not)}`)
+      notifications.forEach(notification => {
+        const cityLocation = cities.find( city => city.name == notification.city)
+        fetch(`https://api.darksky.net/forecast/${process.env.DARK_SKY_KEY}/${cityLocation.lat},${cityLocation.lng}?units=si`)
+              .then(res => res.json())
+              .then(json =>{
+                // create if (json.code === 400) statement for error checking
+                // console.log('JSON '+ JSON.stringify(json))
+                const temperature = json.currently.temperature
+                const summary = json.currently.summary
+                const daily_data_summary = json.daily.summary
+                messagebird.messages.create({
+                              originator : '+31685765664',
+                              recipients : [ `+31${notification.phone}` ],
+                              body : `${daily_data_summary}`
+                            },
+                            function (err, response) {
+                                  if (err) {
+                                    console.log("ERROR:");
+                                    console.log(err);
+                                } else {
+                                    console.log("SUCCESS:");
+                                    console.log(response);
+                                }
+                            })
+                    }).catch(err => console.error(err))
+      })
+    }
+    else{
+      console.log('No match(es) found :(')
+    }
+  })
+  .catch(err => console.error(err))
+})
+
 // ROUTES
 app.get('/', (req, res)=>{
-
-  cron.schedule('* * * * *', () => {
-    let datetime = new Date().timeNow();
-    not.then(notifications => 
-      notifications.forEach(notification => {
-        console.log(`Datetime ${datetime}`)
-        if(notification.dataValues.notificationTime == datetime ){
-          //    send a notification text to every match(es)
-          messagebird.messages.create({
-            originator : '+31685765664',
-            recipients : [ '+31685765664' ],
-            body : 'Hello World, I am a text message and I was hatched by Javascript code!'
-          },
-          function (err, response) {
-                if (err) {
-                  console.log("ERROR:");
-                  console.log(err);
-              } else {
-                  console.log("SUCCESS:");
-                  console.log(response);
-              }
-          })
-          console.log(`Match found for ${datetime}`)
-        }
-        else{
-          console.log(`Notification ${notification.dataValues.id} time is ${notification.dataValues.notificationTime}`)
-        }
-      }))
-  
-  // query the database for any notification time that matches current time
-  // if match(es) found
-  //    send a notification text to every match(es)
-
-  // ! Make sure that the format used for stored "notification time"
-  // is the same format used for "current time"
-  // ! 
-});
   res.render('index')
 })
 
