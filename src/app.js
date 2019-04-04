@@ -15,16 +15,7 @@ const bcrypt = require('bcrypt')
 const express = require('express')
 const app = express()
 const port = 5000 ||process.env.PORT
-
-// For todays date;
-Date.prototype.today = function () { 
-  return ((this.getDate() < 10)?"0":"") + this.getDate() +"/"+(((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) +"/"+ this.getFullYear();
-}
-// For the time now
-Date.prototype.timeNow = function(){ 
-  // return ((this.getHours() < 10)?"0":"") + ((this.getHours()>12)?"0"+(this.getHours()-12):this.getHours()) +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes(); 
-  return (this.getHours()+":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes());
-};
+const timer = require('./timer')
 
 // EXPRESS CONFIG SETTINGS
 app.set('view engine', 'ejs')
@@ -87,10 +78,8 @@ User.hasMany(Notification);
 Notification.belongsTo(User);
 
 // DETECT TIME, FIND MATCHING NOTIFICATIONS, FIRE MESSAGE ACCORDINGLY
-cron.schedule('* * * * *', () => {
-      let datetime = new Date().timeNow();
-
-      Notification.findAll({where: {notificationTime: datetime}})
+cron.schedule('* * * * *', () => {  
+      Notification.findAll({where: {notificationTime: timer.timeNow()}})
         .then(notifications => {
           if(notifications.length >= 1){
             notifications.forEach(notification => {
@@ -116,7 +105,7 @@ cron.schedule('* * * * *', () => {
               })
             }
             else{
-              console.log(`No notifications is scheduled for ${datetime}`)
+              console.log(`No notifications is scheduled for ${timer.timeNow()}`)
             }
           })
         .catch(err => console.error(err))
@@ -257,7 +246,6 @@ app.get('/notifications', (req, res)=>{
 sequelize.sync()
 .then(()=>{
   app.listen(port, ()=>{
-    let datetime = new Date().timeNow();
-    console.log(`App is listening on port ${port}, current time is ${datetime}`)
+    console.log(`App is listening on port ${port}, current time is ${timer.timeNow()}`)
   })
 })
