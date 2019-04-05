@@ -3,11 +3,7 @@ const messagebird = require('messagebird')(`${process.env.MSG_BIRD_TEST}`);
 const cities = require('cities.json');
 const cron = require('node-cron');
 const Sequelize = require('sequelize')
-const sequelize = new Sequelize('weatheralerts', `${process.env.DB_USER}`, null, {
-  host: `${process.env.DB_HOST}`,
-  dialect: 'postgres',
-  operatorsAliases: false,
-})
+const sequelize = new Sequelize(`${process.env.DATABASE_URL}`)
 const fetch = require('node-fetch')
 const bodyParser = require('body-parser')
 const session = require('express-session')
@@ -15,7 +11,7 @@ const SequelizeStore = require('connect-session-sequelize')(session.Store)
 const bcrypt = require('bcrypt')
 const express = require('express')
 const app = express()
-const port = 5000 ||process.env.PORT
+const port = process.env.PORT||5000
 const timer = require('./timer')
 const path = require('path')
 
