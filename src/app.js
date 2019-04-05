@@ -1,9 +1,10 @@
+const dotenv = require('dotenv').config()
 const messagebird = require('messagebird')(`${process.env.MSG_BIRD_TEST}`);
 const cities = require('cities.json');
 const cron = require('node-cron');
 const Sequelize = require('sequelize')
-const sequelize = new Sequelize('weatheralerts', 'lloydchambrier', null, {
-  host: 'localhost',
+const sequelize = new Sequelize('weatheralerts', `${process.env.DB_USER}`, null, {
+  host: `${process.env.DB_HOST}`,
   dialect: 'postgres',
   operatorsAliases: false,
 })
@@ -17,6 +18,7 @@ const app = express()
 const port = 5000 ||process.env.PORT
 const timer = require('./timer')
 const path = require('path')
+
 // EXPRESS CONFIG SETTINGS
 app.set('view engine', 'ejs')
 app.use(express.static(path.join(__dirname, 'public')))
