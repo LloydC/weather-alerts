@@ -16,10 +16,10 @@ const express = require('express')
 const app = express()
 const port = 5000 ||process.env.PORT
 const timer = require('./timer')
-
+const path = require('path')
 // EXPRESS CONFIG SETTINGS
 app.set('view engine', 'ejs')
-app.use(express.static('public'))
+app.use(express.static(path.join(__dirname, 'public')))
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(session({
     store: new SequelizeStore({
