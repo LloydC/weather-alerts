@@ -1,4 +1,5 @@
 const dotenv = require('dotenv').config()
+const path = require('path')
 const messagebird = require('messagebird')(`${process.env.MSG_BIRD_TEST}`);
 const cities = require('cities.json');
 const cron = require('node-cron');
@@ -11,9 +12,8 @@ const SequelizeStore = require('connect-session-sequelize')(session.Store)
 const bcrypt = require('bcrypt')
 const express = require('express')
 const app = express()
-const port = process.env.PORT||5000
 const timer = require('./timer')
-const path = require('path')
+const port = process.env.PORT||5000
 
 // EXPRESS CONFIG SETTINGS
 app.set('view engine', 'ejs')
