@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title> Weather Alerts - Notifications Check</title>
+  </head>
+  <body>
+    <%- include('partials/navbar') -%>
+      <h1>Notification Check </h1>
+      <br>
+      <p>Plese enter your verification code below: </p>
+      <form method="post" action="/notifications">
+        <input type="hidden" name="id" value=`<%= id%>` />
+        <input type="text" name="token" />
+        <input type="submit" value="Check code" />
+      </form>
+  </body>
+</html>

@@ -225,6 +225,11 @@ app.get('/profile', (req, res)=>{
 app.get('/add-notification', (req, res)=>{
     res.render('add-notification')
 })
+
+app.post('/verify', (req, res)=>{
+  
+})
+
 app.post('/notifications', (req, res)=>{
     Notification.create({
       phone: req.body.phone,

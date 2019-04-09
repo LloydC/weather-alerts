@@ -5,9 +5,12 @@
   </head>
   <body>
     <%- include('partials/navbar') -%>
+    <% if (error) { %>
+      <h2><%= error %></h2>
+    <% } %>
       <h1>Create your notification here </h1>
       <br>
-      <form action="/notifications" method="post" autocomplete="off">
+      <form action="/verify" method="post" autocomplete="off">
         Phone number:<br>
         <input type="tel" name="phone" placeholder="i.e: 06........">
         <br>
